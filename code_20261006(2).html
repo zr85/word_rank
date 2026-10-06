@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="vintage-cream">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>词阶 WordRank | 开场动画预览</title>
+<style>
+  :root[data-theme="vintage-cream"] {
+    --bg: #f8f3e8;
+    --card: #fffbf3;
+    --primary: #a84a38;
+    --accent: #d4a748;
+    --text: #2c2c2c;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ========== 开场动画容器 ========== */
+  .opening-scene {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* 3D 书本 */
+  .book-3d {
+    width: 220px;
+    height: 300px;
+    position: relative;
+    transform-style: preserve-3d;
+    transform: rotateY(0deg) rotateX(0deg);
+    transition: transform 1.2s ease-in-out 1s;
+  }
+
+  .book-3d.tilt-down {
+    transform: rotateY(0deg) rotateX(52deg);
+  }
+
+  .book-cover {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #a84a38;
+    border-radius: 2px 12px 12px 2px;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    transition: transform 0.8s ease-out 1.6s;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  }
+
+  .book-cover.open {
+    transform: rotateY(-165deg);
+  }
+
+  .dict-cover-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #f7d154;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    z-index: 6;
+    pointer-events: none;
+  }
+
+  .dict-cover-sub {
+    position: absolute;
+    top: calc(50% + 34px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: #ffe9a8;
+    z-index: 6;
+    pointer-events: none;
+  }
+
+  .book-page {
+    position: absolute;
+    width: 98%;
+    height: 96%;
+    background: #fffbf3;
+    border: 1px solid #ddd;
+    border-radius: 2px 8px 8px 2px;
+    left: 4px;
+    transform-origin: left;
+    transform-style: preserve-3d;
+  }
+
+  .page1 { transition: transform 0.4s ease 1.9s; }
+  .page2 { transition: transform 0.4s ease 2.1s; }
+  .page3 { transition: transform 0.4s ease 2.3s; }
+
+  .book-3d.page-flip .page1 { transform: rotateY(-120deg); }
+  .book-3d.page-flip .page2 { transform: rotateY(-135deg); }
+  .book-3d.page-flip .page3 { transform: rotateY(-150deg); }
+
+  /* 漂浮字母/单词 */
+  .floating-letters {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .float-word {
+    position: absolute;
+    font-size: 18px;
+    color: var(--primary);
+    opacity: 0;
+    animation: floatUp 2.2s ease-out forwards;
+  }
+
+  @keyframes floatUp {
+    0% {
+      opacity: 0;
+      transform: translateY(0px);
+    }
+    20% {
+      opacity: 0.9;
+    }
+    80% {
+      opacity: 0.7;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-140px);
+    }
+  }
+
+  /* 中英对照文案 */
+  .line-reveal {
+    position: absolute;
+    top: 48%;
+    left: 51%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    opacity: 0;
+    filter: blur(8px);
+    letter-spacing: 12px;
+    transition:
+      opacity 1.4s ease,
+      filter 1.4s ease,
+      letter-spacing 1.4s ease;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  .line-reveal.show {
+    opacity: 1;
+    filter: blur(0);
+    letter-spacing: 4px;
+  }
+
+  .text-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .line1,
+  .line2 {
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--primary);
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  }
+
+  .en-sub {
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--primary);
+    opacity: 0.85;
+    letter-spacing: 1px;
+  }
+
+  /* 等级卡片 */
+  .card-slider-wrap {
+    position: absolute;
+    bottom: 60px;
+    width: 90%;
+    max-width: 700px;
+    opacity: 0;
+    transform: translateY(60px);
+    transition: all 1s ease 6.2s;
+    pointer-events: none;
+  }
+
+  .card-slider-wrap.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .card-slider {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding: 10px 4px 20px;
+    scroll-snap-type: x mandatory;
+  }
+
+  .level-card {
+    min-width: 160px;
+    padding: 32px 12px;
+    background: var(--card);
+    border-radius: 14px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 600;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    scroll-snap-align: center;
+  }
+
+  .level-card.active {
+    border: 3px solid var(--primary);
+  }
+
+  .enter-btn {
+    display: block;
+    margin: 16px auto 0;
+    padding: 12px 30px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 17px;
+    cursor: pointer;
+  }
+
+  /* 主页面默认隐藏，点击进入后显示 */
+  .main-page {
+    display: none;
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .main-page.show {
+    display: block;
+  }
+
+  .main-page h1 {
+    font-size: 32px;
+    margin-bottom: 16px;
+    color: var(--primary);
+  }
+
+  .main-page p {
+    font-size: 18px;
+    opacity: 0.8;
+  }
+</style>
+</head>
+
+<body>
+
+<!-- 开场动画 -->
+<div class="opening-scene" id="openingScene">
+  <div class="book-3d" id="book3d">
+    <div class="book-cover" id="bookCover">
+      <div class="dict-cover-text">Dictionary</div>
+      <div class="dict-cover-sub">WORDRANK</div>
+    </div>
+    <div class="book-page page1"></div>
+    <div class="book-page page2"></div>
+    <div class="book-page page3"></div>
+  </div>
+
+  <div class="floating-letters" id="floatLetters"></div>
+
+  <div class="line-reveal" id="lineReveal">
+    <div class="text-group">
+      <span class="line1">茫茫词海</span>
+      <span class="en-sub">Vast sea of words</span>
+    </div>
+    <div class="text-group">
+      <span class="line2">我恰恰认识你</span>
+      <span class="en-sub">I find you right here</span>
+    </div>
+  </div>
+
+  <div class="card-slider-wrap" id="cardSliderWrap">
+    <div class="card-slider">
+      <div class="level-card" data-level="四级">四级</div>
+      <div class="level-card" data-level="六级">六级</div>
+      <div class="level-card" data-level="专四">专四</div>
+      <div class="level-card" data-level="专八">专八</div>
+    </div>
+    <button class="enter-btn" id="enterBtn">进入词阶</button>
+  </div>
+</div>
+
+<!-- 主页面 -->
+<div class="main-page" id="mainPage">
+  <h1>欢迎进入词阶 WordRank</h1>
+  <p>你已完成开场动画预览，后续可接入解析工具、生词本和 AI 助手页面。</p>
+</div>
+
+<script>
+  const book3d = document.getElementById("book3d");
+  const bookCover = document.getElementById("bookCover");
+  const floatLettersWrap = document.getElementById("floatLetters");
+  const lineReveal = document.getElementById("lineReveal");
+  const cardSliderWrap = document.getElementById("cardSliderWrap");
+  const openingScene = document.getElementById("openingScene");
+  const mainPage = document.getElementById("mainPage");
+  const enterBtn = document.getElementById("enterBtn");
+
+  const wordList = [
+    "read", "word", "study", "phrase", "verb",
+    "noun", "sentence", "define", "lexis", "grammar"
+  ];
+
+  // 生成漂浮单词
+  function createFloatWords() {
+    for (let i = 0; i < 36; i++) {
+      const span = document.createElement("span");
+      span.className = "float-word";
+      span.innerText = wordList[Math.floor(Math.random() * wordList.length)];
+      span.style.left = Math.random() * 80 + 10 + "%";
+      span.style.top = Math.random() * 60 + 20 + "%";
+      span.style.animationDelay = (2.4 + Math.random() * 1.2) + "s";
+      floatLettersWrap.appendChild(span);
+    }
+  }
+
+  // 动画时序
+  setTimeout(() => book3d.classList.add("tilt-down"), 0);
+  setTimeout(() => {
+    bookCover.classList.add("open");
+    book3d.classList.add("page-flip");
+    createFloatWords();
+  }, 1600);
+  setTimeout(() => lineReveal.classList.add("show"), 4600);
+  setTimeout(() => cardSliderWrap.classList.add("show"), 1000);
+
+  // 卡片选择
+  document.querySelectorAll(".level-card").forEach(card => {
+    card.addEventListener("click", function () {
+      document.querySelectorAll(".level-card").forEach(c => c.classList.remove("active"));
+      this.classList.add("active");
+    });
+  });
+
+  // 进入主页面
+  enterBtn.addEventListener("click", () => {
+    openingScene.style.opacity = "0";
+    openingScene.style.transition = "opacity 0.8s ease";
+
+    setTimeout(() => {
+      openingScene.remove();
+      mainPage.classList.add("show");
+    }, 800);
+  });
+</script>
+
+</body>
+</html>
